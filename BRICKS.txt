@@ -1,0 +1,538 @@
+================================================================================
+PULSE — BRICK-BY-BRICK IMPLEMENTATION ROADMAP
+Track 03: AI Revenue Recovery (Razorpay Buildathon)
+================================================================================
+
+PHILOSOPHY:
+"AI provides intelligence. Deterministic infrastructure provides safety.
+Correctness first. Observability second. Autonomy third. Polish last."
+
+We build ONE BRICK AT A TIME. Each brick has:
+- Clear responsibility (Single Responsibility Principle)
+- Explicit data inputs and outputs
+- Independent unit tests
+- Zero untested code
+
+--------------------------------------------------------------------------------
+OVERVIEW OF ALL 17 BRICKS
+--------------------------------------------------------------------------------
+
+[FOUNDATION & DATA CONTRACTS]
+  Brick 01: Domain Types & Data Contracts
+  Brick 02: Deterministic Payment Simulator
+
+[OBSERVABILITY & DETECTION]
+  Brick 03: Telemetry & Observability Engine
+  Brick 04: Statistical Anomaly Detector
+  Brick 05: Revenue-at-Risk Engine
+
+[DECISION & INTERVENTION]
+  Brick 06: Counterfactual & Financial Utility Engine
+  Brick 07: Deterministic Finite State Machine (FSM)
+  Brick 08: Canary Traffic Controller
+  Brick 09: Rollback Controller, Hysteresis & Route Quarantine
+
+[INTELLIGENCE & MEMORY]
+  Brick 10: Incident Memory & Vector Retrieval
+  Brick 11: Structured Diagnostic Evidence Tools
+  Brick 12: Grounded AI Diagnostician (LLM)
+
+[ORCHESTRATION & INTERFACES]
+  Brick 13: End-to-End Autonomous Control Loop
+  Brick 14: REST & WebSocket Streaming API (FastAPI)
+  Brick 15: Real-Time Interactive Dashboard (Glassmorphic UI)
+
+[VALIDATION & DEMO]
+  Brick 16: Adversarial & Stress Testing
+  Brick 17: End-to-End Demo Script & Pitch Hardening
+
+================================================================================
+DETAILED BREAKDOWN OF EACH BRICK
+================================================================================
+
+--------------------------------------------------------------------------------
+BRICK 01: DOMAIN TYPES & DATA CONTRACTS
+--------------------------------------------------------------------------------
+What it is:
+  The foundational type system and data models using Pydantic.
+Why it exists:
+  In financial systems, untyped dictionaries lead to silent runtime bugs.
+  We enforce strict types, valid ranges (e.g. amount > 0, success rate in [0,1]),
+  and automatic JSON serialization for LLM tools and frontend.
+
+Key Components to Write:
+  1. Enums (pulse/domain/types.py):
+     - SystemState: HEALTHY, DEGRADED, DIAGNOSING, EVALUATING, CANARY,
+                    PROMOTED, ROLLED_BACK, QUARANTINED, ESCALATED
+     - RouteStatus: ACTIVE, DEGRADED, QUARANTINED, STANDBY
+     - Bank: HDFC, ICICI, SBI, AXIS, KOTAK, YES_BANK, OTHER
+     - PaymentMethod: UPI, CARD, NETBANKING, WALLET
+     - ErrorCode: NONE, PSP_TIMEOUT, GATEWAY_ERROR, ISSUER_DOWN, AUTH_FAILED,
+                  INSUFFICIENT_FUNDS, NETWORK_RESET, RATE_LIMITED
+     - ActionType: NO_ACTION, SWITCH_ROUTE, SPLIT_TRAFFIC_CANARY,
+                   QUARANTINE_ROUTE, ROLLBACK, ESCALATE_HUMAN
+     - CanaryGateStatus: PASSED, FAILED, PENDING, SKIPPED
+
+  2. Models:
+     - Transaction & TransactionResult (pulse/domain/transaction.py)
+     - PaymentRoute & RouteHealth (pulse/domain/route.py)
+     - TelemetrySnapshot & LatencyMetrics & ConfidenceInterval (pulse/domain/telemetry.py)
+     - IncidentEvidence & DiagnosticHypothesis & IncidentRecord (pulse/domain/incident.py)
+     - CandidateEvaluation & CounterfactualDecision (pulse/domain/counterfactual.py)
+     - CanaryGate & CanaryConfig & CanaryState (pulse/domain/canary.py)
+     - StateTransitionEvent & AuditEvent (pulse/domain/events.py)
+
+Definition of Done:
+  - All models pass pydantic validation.
+  - Invalid values (negative amounts, invalid enum strings) raise ValidationError.
+  - 100% test coverage in tests/test_domain/.
+
+
+--------------------------------------------------------------------------------
+BRICK 02: DETERMINISTIC PAYMENT SIMULATOR
+--------------------------------------------------------------------------------
+What it is:
+  A synthetic payment environment that generates realistic transaction streams
+  with reproducible pseudo-random behavior via a seed (e.g., --seed 42).
+Why it exists:
+  We cannot experiment on live banks or production payment gateways.
+  The simulator gives us a controllable testbed where we can inject real-world
+  failures (timeout spikes, bank outages, flapping routes) deterministically.
+
+Key Components to Write:
+  1. Latency & Failure Generators (pulse/simulator/generators.py):
+     - Log-normal latency distributions (realistic long-tail latencies).
+     - Error injectors based on route health and bank conditions.
+  2. Route Behavior Profiles (pulse/simulator/profiles.py):
+     - PSP_A, PSP_B, PSP_C profiles (base success rates, latency curves, costs).
+  3. Scenario Engine (pulse/simulator/scenarios.py):
+     - Scenario 1: Healthy Baseline
+     - Scenario 2: PSP Gateway Timeout Degradation (92% -> 34% success)
+     - Scenario 3: Single Issuer Bank Outage (HDFC fails, others healthy)
+     - Scenario 4: Auth Failure Spike (customer-side OTP failure)
+     - Scenario 5: Route Flapping (A degrades, B degrades, cyclic failure)
+     - Scenario 6: False Positive (minor noise, no intervention warranted)
+     - Scenario 7: Secondary Failure during Canary (canary route drops to 43%)
+  4. Simulator Stream (pulse/simulator/engine.py):
+     - Generates streams of TransactionResult ticks deterministically.
+
+Definition of Done:
+  - Same seed produces identical transaction sequences.
+  - Injected degradation scenarios shift metrics as expected.
+  - Unit tests verify deterministic replay.
+
+
+--------------------------------------------------------------------------------
+BRICK 03: TELEMETRY & OBSERVABILITY ENGINE
+--------------------------------------------------------------------------------
+What it is:
+  A real-time metrics aggregator that processes the transaction stream into
+  rolling statistical windows.
+Why it exists:
+  Raw transactions cannot tell you if the system is healthy. Observability
+  aggregates transactions over sliding windows (e.g. 60s, 300s) to calculate
+  rates, percentiles, and error breakdowns.
+
+Key Components to Write:
+  1. Sliding Window Buffer (pulse/observability/window.py):
+     - Fixed-time or fixed-count sliding window of transactions.
+  2. Statistical Calculators (pulse/observability/metrics.py):
+     - Success Rate calculation.
+     - Wilson Score Confidence Interval (95% CI) for sample-size-aware accuracy.
+     - Latency percentiles: p50, p90, p95, p99.
+     - Error Code distribution (counts & percentages).
+     - Breakdown by Bank and Payment Method.
+  3. Baseline Tracker (pulse/observability/baseline.py):
+     - Maintains historical healthy baseline per route and per bank.
+
+Definition of Done:
+  - Rolling metric calculations match exact mathematical expected values.
+  - Wilson confidence intervals narrow appropriately as sample size increases.
+  - Baseline tracking accurately compares current window vs baseline.
+
+
+--------------------------------------------------------------------------------
+BRICK 04: STATISTICAL ANOMALY DETECTOR
+--------------------------------------------------------------------------------
+What it is:
+  A deterministic rule-and-statistics engine that flags when current metrics
+  deviate significantly from healthy baselines.
+Why it exists:
+  We must NOT trigger expensive investigations or routing changes for tiny
+  random noise. Anomaly detection ensures interventions only trigger on
+  statistically significant degradations.
+
+Key Components to Write:
+  1. Statistical Tests (pulse/detector/algorithms.py):
+     - Z-score test on success rate drop.
+     - Confidence bound separation (current upper bound < baseline lower bound).
+     - Latency SLO threshold violation (p95 > baseline * multiplier).
+     - Error spike detection (specific error code exceeds threshold).
+  2. Severity Classifier (pulse/detector/evaluator.py):
+     - Classifies anomaly into LOW, MEDIUM, HIGH, CRITICAL.
+     - Filters out noise (False Positive suppression).
+  3. Anomaly Report Generator (pulse/detector/report.py):
+     - Emits AnomalyReport with exact metrics triggering the alert.
+
+Definition of Done:
+  - Detects all injected degradation scenarios (Scenarios 2, 3, 4, 5).
+  - Ignores healthy noise (Scenario 1) and small blips (Scenario 6).
+
+
+--------------------------------------------------------------------------------
+BRICK 05: REVENUE-AT-RISK ENGINE
+--------------------------------------------------------------------------------
+What it is:
+  A deterministic financial calculator that computes the monetary loss caused
+  by an ongoing degradation.
+Why it exists:
+  Payment reliability is fundamentally about revenue. An SRE needs to know
+  "How much money are we losing per minute?" to prioritize interventions.
+
+Formula:
+  Revenue At Risk = max(0, Baseline Success Rate - Current Success Rate)
+                    * Traffic Volume (txns/min)
+                    * Average Order Value (INR)
+
+Key Components to Write:
+  1. Loss Calculator (pulse/financial/revenue_loss.py):
+     - Total revenue at risk (aggregate and per-route).
+     - Breakdown by bank and payment method.
+     - Projected loss if degradation continues for 1h, 24h.
+  2. Recovered Revenue Estimator (pulse/financial/recovery.py):
+     - Quantifies actual INR recovered post-intervention vs counterfactual loss.
+
+Definition of Done:
+  - Precise arithmetic calculations with zero floating-point drift.
+  - Verified against synthetic batches with known transaction amounts.
+
+
+--------------------------------------------------------------------------------
+BRICK 06: COUNTERFACTUAL & FINANCIAL UTILITY ENGINE
+--------------------------------------------------------------------------------
+What it is:
+  An optimization engine that evaluates candidate recovery actions (e.g. switch
+  from Route A to Route B vs stay on Route A) using a financial utility matrix.
+Why it exists:
+  A candidate route might have a slightly higher raw success rate, but higher
+  processing fees, higher latency, or a recent failure history. Pulse calculates
+  the complete Net Utility before deciding to switch.
+
+Utility Formula:
+  Net Utility = Expected Successful GMV
+              - Expected Failure Cost
+              - Latency Penalty Cost
+              - Route Switching Cost (risk penalty)
+
+Key Components to Write:
+  1. Candidate Route Evaluator (pulse/counterfactual/evaluator.py):
+     - Evaluates all available routes against current traffic profile.
+     - Filters out quarantined routes and routes not supporting the affected bank.
+  2. Utility Scorer (pulse/counterfactual/utility.py):
+     - Computes Net Utility for each candidate vs current route.
+     - Explicitly includes NO_ACTION as an option when switching is worse.
+  3. Decision Generator (pulse/counterfactual/decision.py):
+     - Selects top candidate only if Utility(Candidate) - Utility(Current) > Threshold.
+
+Definition of Done:
+  - Selects Route B when Route B is genuinely healthier.
+  - Correctly chooses NO_ACTION when candidate routes are no better or quarantined.
+
+
+--------------------------------------------------------------------------------
+BRICK 07: DETERMINISTIC FINITE STATE MACHINE (FSM)
+--------------------------------------------------------------------------------
+What it is:
+  A state machine governing Pulse's lifecycle:
+  HEALTHY -> DEGRADED -> DIAGNOSING -> EVALUATING -> CANARY -> PROMOTED / ROLLED_BACK
+Why it exists:
+  Autonomous systems must NEVER perform arbitrary state jumps. An explicit FSM
+  ensures every transition is legal, auditable, and driven by deterministic events.
+
+State Diagram:
+  [HEALTHY] ──(Anomaly Detected)──> [DEGRADED]
+      │                                   │
+      │                             (Investigate)
+      │                                   ▼
+      │                             [DIAGNOSING]
+      │                                   │
+      │                             (Hypothesis Formed)
+      │                                   ▼
+      │                             [EVALUATING]
+      │                                   │
+      │                        (Candidate Selected)
+      │                                   ▼
+      │                             [CANARY (20%)]
+      │                               /        \
+      │                    (Gates Pass)        (Gate Fails)
+      │                             /            \
+      │                            ▼              ▼
+      │                       [PROMOTED]    [ROLLED_BACK]
+      │                            │              │
+      │                            │        [QUARANTINED]
+      │                            │              │
+      │                      (Verify 100%)  (No safe routes)
+      │                            │              ▼
+      └────────────────────────────┴────────> [ESCALATED]
+
+Key Components to Write:
+  1. State Machine Engine (pulse/fsm/machine.py):
+     - Validates allowed transitions.
+     - Rejects invalid transitions with InvalidStateTransitionError.
+  2. Transition Logger & Audit (pulse/fsm/audit.py):
+     - Records event timestamp, source state, target state, reason, and actor.
+
+Definition of Done:
+  - All legal transitions tested and verified.
+  - All illegal transitions strictly rejected.
+  - Audit trail contains 100% of state change events.
+
+
+--------------------------------------------------------------------------------
+BRICK 08: CANARY TRAFFIC CONTROLLER
+--------------------------------------------------------------------------------
+What it is:
+  A traffic splitting and evaluation engine that routes a small percentage
+  (e.g., 20%) of live transactions to a candidate route before full promotion.
+Why it exists:
+  Blindly moving 100% of traffic to an unverified route is dangerous. The canary
+  acts as a safety blast shield.
+
+Deterministic Canary Gates:
+  1. Minimum Sample Size Gate (e.g. n >= 50 transactions).
+  2. Success Rate Improvement Gate (Candidate SR > Current SR + delta).
+  3. Statistical Confidence Gate (Wilson Lower Bound > threshold).
+  4. Latency SLO Gate (p95 latency < max allowed limit).
+  5. Critical Error Cap Gate (zero fatal gateway errors).
+
+Key Components to Write:
+  1. Traffic Splitter (pulse/canary/router.py):
+     - Routes fraction (e.g. 20%) to target route, 80% to current route.
+  2. Gate Evaluator (pulse/canary/gates.py):
+     - Evaluates all 5 gates deterministically on incoming canary traffic.
+  3. Promotion Decision Engine (pulse/canary/controller.py):
+     - Signals PROMOTION only when ALL gates pass.
+     - Signals ABORT/ROLLBACK immediately if any critical gate fails.
+
+Definition of Done:
+  - Healthy canary promotes safely after sample size threshold is met.
+  - Degraded canary triggers immediate abort before harming main traffic.
+
+
+--------------------------------------------------------------------------------
+BRICK 09: ROLLBACK CONTROLLER, HYSTERESIS & ROUTE QUARANTINE
+--------------------------------------------------------------------------------
+What it is:
+  The safety brake of Pulse. Handles automated rollback when a canary fails,
+  places bad routes into quarantine cooldown, and enforces deadbands.
+Why it exists:
+  Prevents route flapping (oscillating A -> B -> A -> B -> A) and ensures
+  failed routes are isolated from taking further traffic.
+
+Key Components to Write:
+  1. Rollback Executor (pulse/safety/rollback.py):
+     - Instantly restores 100% traffic to fallback/safe route.
+  2. Quarantine Manager (pulse/safety/quarantine.py):
+     - Flags route as QUARANTINED with cooldown duration (e.g., 10 minutes or 500 txns).
+     - Prevents Counterfactual Engine from selecting quarantined routes.
+  3. Hysteresis & Anti-Flapping Engine (pulse/safety/hysteresis.py):
+     - Enforces deadband delta (must beat current route by > 5% to switch).
+     - Tracks route switch frequency and triggers ESCALATED if threshold exceeded.
+
+Definition of Done:
+  - Failed canary immediately rolls back traffic.
+  - Failed route is quarantined and ignored by candidate selection.
+  - Flapping test demonstrates oscillation is completely prevented.
+
+
+--------------------------------------------------------------------------------
+BRICK 10: INCIDENT MEMORY & HISTORICAL RETRIEVAL
+--------------------------------------------------------------------------------
+What it is:
+  A structured persistence and retrieval ledger for completed incidents.
+Why it exists:
+  When an incident happens, the AI Diagnostician can query past incidents
+  ("Have we seen PSP_A timeout spikes on Friday afternoons before? What fixed it?").
+
+Key Components to Write:
+  1. Incident Repository (pulse/memory/repository.py):
+     - Stores IncidentRecord (timestamp, root cause, evidence, action, recovery INR).
+  2. Search & Retrieval Engine (pulse/memory/retriever.py):
+     - Queries past incidents by similarity (error code, affected route, bank).
+     - Formats historical context for LLM diagnostic prompt.
+
+Definition of Done:
+  - Incident records are saved immutably.
+  - Queries return relevant past incidents accurately.
+
+
+--------------------------------------------------------------------------------
+BRICK 11: STRUCTURED DIAGNOSTIC EVIDENCE TOOLS
+--------------------------------------------------------------------------------
+What it is:
+  A clean tool-calling API interface that allows the AI Diagnostician to query
+  telemetry, compare baselines, and inspect error logs.
+Why it exists:
+  The LLM must NEVER guess or hallucinate metrics. It must use explicit tools
+  to inspect structured facts.
+
+Tools Provided to LLM:
+  - get_route_metrics(route_id, window_seconds)
+  - get_bank_metrics(bank, window_seconds)
+  - get_error_distribution(route_id)
+  - get_latency_percentiles(route_id)
+  - compare_with_baseline(route_id)
+  - get_recent_incidents(limit)
+
+Key Components to Write:
+  1. Tool Definitions & Handlers (pulse/tools/evidence_tools.py):
+     - Connects observability engine to structured tool outputs.
+  2. Tool Schemas (pulse/tools/schemas.py):
+     - Pydantic tool schemas formatted for standard function-calling APIs.
+
+Definition of Done:
+  - All tools return structured JSON containing exact telemetry facts.
+  - Output is formatted cleanly for prompt injection or tool-calling loops.
+
+
+--------------------------------------------------------------------------------
+BRICK 12: GROUNDED AI DIAGNOSTICIAN (LLM)
+--------------------------------------------------------------------------------
+What it is:
+  The AI reasoning engine that analyzes evidence, distinguishes root causes
+  (e.g., PSP Gateway timeout vs Issuer Bank outage vs OTP failure), and outputs
+  a structured DiagnosticHypothesis.
+Why it exists:
+  Rule engines struggle with complex qualitative patterns. The LLM excels at
+  correlating multiple signals and providing clear human explanations.
+
+Boundary Rule:
+  The LLM produces a HYPOTHESIS and RECOMMENDATION. It does NOT execute actions
+  or control money directly.
+
+Key Components to Write:
+  1. Prompt Builder & Context Assembler (pulse/ai/prompts.py):
+     - Injects evidence, baseline comparison, and historical incident memory.
+  2. Diagnostician Agent (pulse/ai/diagnostician.py):
+     - Calls LLM (or mock LLM in test mode) to produce DiagnosticHypothesis.
+  3. Grounding & Hallucination Verifier (pulse/ai/grounding.py):
+     - Deterministically verifies that all numbers in the LLM hypothesis match
+       the actual evidence tools.
+
+Definition of Done:
+  - Accurately classifies Scenario 2 (PSP Degradation), Scenario 3 (Issuer Outage),
+    and Scenario 4 (Auth Spike).
+  - Produces structured Pydantic DiagnosticHypothesis with zero hallucinated figures.
+
+
+--------------------------------------------------------------------------------
+BRICK 13: END-TO-END AUTONOMOUS CONTROL LOOP
+--------------------------------------------------------------------------------
+What it is:
+  The master orchestrator connecting all bricks into the continuous control loop:
+  OBSERVE -> DETECT -> DIAGNOSE -> QUANTIFY -> EVALUATE -> CANARY -> VERIFY -> PROMOTE/ROLLBACK -> REMEMBER
+Why it exists:
+  Brings the individual components together into a single, cohesive engine.
+
+Key Components to Write:
+  1. Pulse Orchestrator (pulse/engine/orchestrator.py):
+     - Main loop processing transaction ticks.
+     - Dispatches events across FSM, Canary Controller, and AI Diagnostician.
+  2. Scenario Runner CLI (run_scenario.py):
+     - Command-line runner to execute scenarios:
+       `python run_scenario.py --scenario gateway_degradation --seed 42`
+
+Definition of Done:
+  - Full automated execution of Scenario 2 (successful recovery) and
+    Scenario 7 (canary failure + automated rollback).
+
+
+--------------------------------------------------------------------------------
+BRICK 14: REST & WEBSOCKET STREAMING API (FASTAPI)
+--------------------------------------------------------------------------------
+What it is:
+  A high-performance FastAPI backend serving REST endpoints and live WebSocket
+  streams for real-time telemetry, state changes, and incident logs.
+Why it exists:
+  Allows the dashboard and external merchant systems to observe and interact
+  with Pulse in real time.
+
+Endpoints:
+  - GET  /api/health: System health and active routes.
+  - GET  /api/metrics/current: Current telemetry snapshot.
+  - GET  /api/incidents: Incident history.
+  - POST /api/scenarios/inject: Inject degradation scenario (for live demos).
+  - POST /api/override/action: Manual human override button.
+  - WS   /ws/telemetry: Real-time 100ms stream of transactions, FSM state, canary gauges.
+
+Definition of Done:
+  - Fast response times (< 10ms).
+  - WebSocket streams live telemetry ticks smoothly.
+
+
+--------------------------------------------------------------------------------
+BRICK 15: REAL-TIME INTERACTIVE DASHBOARD (GLASSMORPHIC UI)
+--------------------------------------------------------------------------------
+What it is:
+  A modern, high-aesthetic web dashboard visualizing the entire Pulse engine.
+Why it exists:
+  In the Buildathon pitch, judges must visually witness the incident unfold,
+  see the AI diagnose in real time, watch the canary split 20% traffic, and see
+  the recovered revenue counter tick upward.
+
+UI Features:
+  - Live Telemetry Gauges (Success Rate, p95 Latency, Timeouts).
+  - Live Revenue-at-Risk & Revenue Recovered Counter (INR).
+  - Visual FSM State Indicator (interactive glowing node graph).
+  - Split-Traffic Canary Visualizer (80% / 20% animated pipeline).
+  - AI Diagnostician Reasoning Terminal (live streaming thought process).
+  - Incident Timeline & History Drawer.
+  - One-Click Scenario Injection Panel (Healthy, Timeout Spike, Bank Down, Rollback).
+
+Definition of Done:
+  - Responsive, dark-mode glassmorphic aesthetic.
+  - Connects seamlessly to WebSocket telemetry stream.
+
+
+--------------------------------------------------------------------------------
+BRICK 16: ADVERSARIAL & STRESS TESTING
+--------------------------------------------------------------------------------
+What it is:
+  A dedicated suite of chaotic and adversarial test scenarios.
+Why it exists:
+  Proves that Pulse is robust against edge cases, malicious flapping, multiple
+  simultaneous failures, and noisy environments.
+
+Test Scenarios:
+  - Cyclic Route Flapping Storm.
+  - Mid-Canary Secondary Gateway Failure.
+  - Total System Blackout (all routes fail -> safe escalation to human).
+  - Subtle Anomaly False Positive Suppression.
+  - High-Volume Throughput Test.
+
+Definition of Done:
+  - 100% of adversarial tests pass with zero crashes or unhandled states.
+
+
+--------------------------------------------------------------------------------
+BRICK 17: END-TO-END DEMO SCRIPT & PITCH HARDENING
+--------------------------------------------------------------------------------
+What it is:
+  A polished, deterministic walkthrough script and demo runner designed
+  for the final Buildathon presentation and video demo.
+Why it exists:
+  Ensures a flawless, compelling, and reproducible 3-minute live pitch.
+
+Demo Flow:
+  1. Normal Healthy Operation (92% success rate, ₹0 revenue at risk).
+  2. Inject Gateway Degradation (Success drops to 34%, ₹1.84L revenue at risk).
+  3. Pulse Detects Anomaly & AI Diagnostician identifies PSP timeout.
+  4. Counterfactual Engine selects Route B.
+  5. 20% Canary deployed -> Passes all 5 gates -> Promoted to 100%.
+  6. Success rate recovers to 91%, revenue recovery counter displays ₹1.65L recovered.
+  7. Inject Secondary Failure on Route B -> Canary fails -> Instant Rollback + Quarantine.
+  8. Final incident logged into memory with full audit trail.
+
+================================================================================
+END OF ROADMAP
+================================================================================
