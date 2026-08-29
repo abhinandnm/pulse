@@ -48,3 +48,6 @@ htmlcov/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Personal Study & Discussion Notes
+notes/
