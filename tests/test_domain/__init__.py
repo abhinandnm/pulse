@@ -1,0 +1,1 @@
+"""Domain contracts test package."""
