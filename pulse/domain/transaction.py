@@ -42,13 +42,23 @@ class TransactionResult(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def set_default_payment_state(cls, data):
+        # 1. Bro, pydantic dumps all incoming raw arguments into this 'data' dictionary before building the object.
+        # If nobody told us what the payment_state is, we gotta figure it out ourselves:
         if isinstance(data, dict) and "payment_state" not in data:
+            # 2. Pull the 2 main clues: did it pass (success)? what went wrong (error_code)?
             success = data.get("success", False)
             error_code = data.get("error_code", ErrorCode.NONE)
+
+            # 3. Time to decide: is it a win, a mystery timeout, or a clean fail?
             if success:
+                # Paisa settled in bank safely -> CAPTURED!
                 data["payment_state"] = PaymentState.CAPTURED
             elif error_code == ErrorCode.PSP_TIMEOUT:
+                # Gateway went ghost! Don't retry blindly or customer gets debited twice -> UNKNOWN!
                 data["payment_state"] = PaymentState.UNKNOWN
             else:
+                # Clean rejection (bad pin, no balance, bank down) -> FAILED!
                 data["payment_state"] = PaymentState.FAILED
+
+        # 4. Hand back the modified dict so pydantic can lock it in as a frozen object.
         return data
