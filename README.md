@@ -2,7 +2,6 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.137.0-009688.svg)](https://fastapi.tiangolo.com/)
-[![Tests Passing](https://img.shields.io/badge/tests-96%20passed-success.svg)](tests/)
 [![Track 03](https://img.shields.io/badge/Razorpay%20Buildathon-Track%2003%20Revenue%20Recovery-blueviolet.svg)](#)
 
 > **PULSE** is an autonomous, closed-loop AI system that protects payment revenue. When payment gateways degrade or bank CBS systems fail, PULSE **detects the outage, diagnoses the root cause using AI, and safely migrates checkout traffic to backup gateways in seconds—with zero human intervention.**
