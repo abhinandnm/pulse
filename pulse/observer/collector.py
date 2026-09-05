@@ -54,6 +54,12 @@ class TelemetryObserver:
             return False
         return True
 
+    def clear(self) -> None:
+        """Empty the window and clear quarantines."""
+        self.window.clear()
+        self.quarantined_routes.clear()
+        self._last_snapshot = None
+
     def get_snapshot(self) -> TelemetrySnapshot:
         """Compute and return real-time TelemetrySnapshot for the sliding window."""
         results = self.window.get_results()

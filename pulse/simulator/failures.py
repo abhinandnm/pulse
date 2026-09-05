@@ -16,6 +16,7 @@ class FailureScenarioType(str, Enum):
     TRAFFIC_SURGE = "TRAFFIC_SURGE"
     ROUTE_FLAPPING = "ROUTE_FLAPPING"
     MID_CANARY_FAILURE = "MID_CANARY_FAILURE"
+    CASCADING_OUTAGE = "CASCADING_OUTAGE"
 
 
 class FailureProfile(BaseModel):
@@ -141,6 +142,17 @@ def create_failure_profile(
             error_code=ErrorCode.PSP_TIMEOUT,
             error_message="Target route failed under load during canary progression",
             canary_trigger_percentage=50,
+        )
+
+    elif scenario_type == FailureScenarioType.CASCADING_OUTAGE:
+        return FailureProfile(
+            scenario_type=FailureScenarioType.CASCADING_OUTAGE,
+            target_route_id=target_route_id,
+            failure_probability=0.95,
+            latency_min_ms=3000.0,
+            latency_max_ms=5000.0,
+            error_code=ErrorCode.GATEWAY_ERROR,
+            error_message="Cascading gateway outage across primary and secondary rails",
         )
 
     return FailureProfile()

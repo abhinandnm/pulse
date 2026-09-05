@@ -79,6 +79,11 @@ class QuarantineManager:
         """Manually release route from quarantine."""
         self._quarantined.pop(route_id, None)
 
+    def clear_all(self) -> None:
+        """Clear all active quarantines and flap histories."""
+        self._quarantined.clear()
+        self._flap_history.clear()
+
     def reset_flap_count(self, route_id: str) -> None:
         """Reset flap count after prolonged healthy operation."""
         self._flap_history.pop(route_id, None)

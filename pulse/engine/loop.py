@@ -79,6 +79,7 @@ class AutonomousControlLoop:
         # Active state tracking
         self.active_incident: Optional[IncidentRecord] = None
         self.active_canary_state: Optional[CanaryState] = None
+        self.promoted_route_id: Optional[str] = None
         self.pending_assisted_decision = None
         self._audit_trail: List[AuditEvent] = []
 
@@ -152,6 +153,7 @@ class AutonomousControlLoop:
                 self.fsm.transition_to(SystemState.PROMOTED, reason=eval_res.reason)
                 audit = self._record_audit("CANARY_CONTROLLER", "PROMOTE", eval_res.reason)
                 audit_records_this_step.append(audit)
+                self.promoted_route_id = updated_state.target_route_id
 
                 # Restore system to healthy
                 self.fsm.transition_to(SystemState.HEALTHY, reason="Candidate promoted to 100% and verified stable")

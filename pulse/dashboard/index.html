@@ -3,229 +3,264 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PULSE — Autonomous AI Payment Reliability & Revenue Recovery</title>
-  <meta name="description" content="Autonomous AI payment routing reliability, canary deployment, and revenue recovery platform for Razorpay Buildathon Track 03.">
+  <title>PULSE — Autonomous AI Payment Reliability</title>
+  <meta name="description" content="PULSE Autonomous AI Payment Reliability & Revenue Recovery.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="dashboard-container">
-    <!-- Header -->
-    <header class="header">
+    
+    <!-- 1. TOP HEADER: Platform Name and Overall Health Status -->
+    <header class="top-header">
       <div class="brand">
-        <div class="logo-icon">⚡</div>
-        <div class="brand-text">
-          <h1>PULSE</h1>
-          <span class="subtext">Autonomous AI Payment Reliability & Revenue Recovery</span>
+        <div class="brand-details">
+          <div class="brand-row">
+            <h1>PULSE</h1>
+            <span class="badge-tag test">TEST MODE</span>
+          </div>
+          <span class="brand-subtitle">Autonomous AI Payment Reliability & Revenue Recovery</span>
         </div>
       </div>
 
-      <div class="header-status">
-        <div class="ws-pill" id="ws-status">
-          <span class="pulse-dot"></span>
-          <span id="ws-text">CONNECTING TO WEBSOCKET...</span>
-        </div>
-        <div class="fsm-badge" id="system-state-badge">
-          STATE: <span id="fsm-state">HEALTHY</span>
-        </div>
-        <div class="mode-selector">
-          <span class="mode-label">MODE:</span>
-          <button class="mode-btn" id="btn-mode-observe" onclick="setMode('OBSERVE')">OBSERVE</button>
-          <button class="mode-btn" id="btn-mode-assisted" onclick="setMode('ASSISTED')">ASSISTED</button>
-          <button class="mode-btn active" id="btn-mode-autonomous" onclick="setMode('AUTONOMOUS')">AUTONOMOUS</button>
+      <div class="header-right">
+        <div class="overall-health-badge" id="overall-health-badge">
+          <span class="health-dot" id="health-dot"></span>
+          <span class="health-text" id="overall-status-text">OVERALL HEALTH: HEALTHY</span>
         </div>
       </div>
     </header>
 
-    <!-- Top KPI Metrics -->
-    <section class="kpi-grid">
-      <div class="kpi-card" id="kpi-sr">
-        <div class="kpi-title">SYSTEM SUCCESS RATE</div>
-        <div class="kpi-value" id="val-sr">98.5%</div>
-        <div class="kpi-subtext" id="val-wilson">95% CI: [96.8% – 99.4%]</div>
-      </div>
-
-      <div class="kpi-card danger" id="kpi-risk">
-        <div class="kpi-title">REVENUE AT RISK (ESTIMATED)</div>
-        <div class="kpi-value" id="val-risk">₹0</div>
-        <div class="kpi-subtext" id="val-projections">1h: ₹0 | 24h: ₹0</div>
-      </div>
-
-      <div class="kpi-card success" id="kpi-recovered">
-        <div class="kpi-title">REVENUE LOSS PREVENTED</div>
-        <div class="kpi-value" id="val-recovered">₹0</div>
-        <div class="kpi-subtext">Automated recovery savings</div>
-      </div>
-
-      <div class="kpi-card" id="kpi-latency">
-        <div class="kpi-title">p95 LATENCY / TIMEOUTS</div>
-        <div class="kpi-value" id="val-latency">145ms</div>
-        <div class="kpi-subtext" id="val-timeouts">Timeout Rate: 0.0%</div>
-      </div>
-    </section>
-
-    <!-- Main Content Layout: Left Routes & Canary, Right AI Doctor & Sandbox -->
-    <div class="main-grid">
-      <!-- Left Column: Routes & Canary -->
-      <div class="col-left">
-        <!-- Route Health Section -->
-        <div class="panel">
-          <div class="panel-header">
-            <h2>Payment Routes Topology & Health</h2>
-            <span class="badge" id="route-count">3 Active Routes</span>
+    <!-- 2. MIDDLE ROW: The 3 Gateways (gate1, gate2, gate3) -->
+    <section class="gateways-row">
+      <!-- Gateway 1 Card -->
+      <div class="gateway-card" id="card-gw1">
+        <div class="gw-top-row">
+          <span class="gw-active-pill active" id="status-gw1">ACTIVE (100% TRAFFIC)</span>
+        </div>
+        <div class="gw-title-area">
+          <span class="gw-id-label">GATEWAY 1</span>
+          <h2 class="gw-name">HDFC Direct Rail</h2>
+        </div>
+        <div class="gw-stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">SUCCESS RATE (SR)</span>
+            <span class="stat-val" id="sr-gw1">98.2%</span>
           </div>
-          <div class="routes-container" id="routes-grid">
-            <!-- Dynamic route cards rendered by JS -->
+          <div class="stat-item">
+            <span class="stat-label">WILSON 95% CI</span>
+            <span class="stat-val" id="wilson-gw1">[96.8% – 99.4%]</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">LATENCY (P95)</span>
+            <span class="stat-val" id="lat-gw1">125ms</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">ERROR RATE (ERR)</span>
+            <span class="stat-val" id="err-gw1">1.8%</span>
           </div>
         </div>
-
-        <!-- Canary Safety Controller Section -->
-        <div class="panel canary-panel">
-          <div class="panel-header">
-            <h2>Canary Safety Controller (5-Gate Validation)</h2>
-            <span class="badge badge-canary" id="canary-status-badge">STANDBY</span>
-          </div>
-          <div class="canary-content">
-            <div class="canary-split-bar">
-              <div class="split-segment primary" id="split-primary" style="width: 100%;">
-                <span id="split-primary-label">Fallback (100%)</span>
-              </div>
-              <div class="split-segment candidate" id="split-candidate" style="width: 0%;">
-                <span id="split-candidate-label">Canary (0%)</span>
-              </div>
-            </div>
-
-            <div class="gates-grid" id="canary-gates-grid">
-              <div class="gate-card" id="gate-sample">
-                <span class="gate-name">1. Min Sample Size</span>
-                <span class="gate-val" id="gate-sample-val">Pending</span>
-              </div>
-              <div class="gate-card" id="gate-sr">
-                <span class="gate-name">2. SR Delta (&ge;90%)</span>
-                <span class="gate-val" id="gate-sr-val">Pending</span>
-              </div>
-              <div class="gate-card" id="gate-wilson">
-                <span class="gate-name">3. Wilson Lower Bound</span>
-                <span class="gate-val" id="gate-wilson-val">Pending</span>
-              </div>
-              <div class="gate-card" id="gate-lat">
-                <span class="gate-name">4. Latency SLO (&le;1000ms)</span>
-                <span class="gate-val" id="gate-lat-val">Pending</span>
-              </div>
-              <div class="gate-card" id="gate-er">
-                <span class="gate-name">5. Error Cap (&le;8%)</span>
-                <span class="gate-val" id="gate-er-val">Pending</span>
-              </div>
-            </div>
-          </div>
+        <div class="gw-cons-note nominal" id="cons-gw1">
+          <span class="cons-icon" id="cons-icon-gw1">✓</span>
+          <span class="cons-msg" id="cons-msg-gw1">All metrics nominal. Routing 100% of primary traffic.</span>
         </div>
       </div>
 
-      <!-- Right Column: AI Doctor & Sandbox -->
-      <div class="col-right">
-        <!-- AI Doctor Diagnosis & Root Cause -->
-        <div class="panel doctor-panel">
-          <div class="panel-header">
-            <h2>Grounded AI Doctor & Root Cause Analysis</h2>
-            <span class="badge badge-ai" id="doctor-status-badge">ONLINE</span>
+      <!-- Gateway 2 Card -->
+      <div class="gateway-card" id="card-gw2">
+        <div class="gw-top-row">
+          <span class="gw-active-pill standby" id="status-gw2">STANDBY (0% TRAFFIC)</span>
+        </div>
+        <div class="gw-title-area">
+          <span class="gw-id-label">GATEWAY 2</span>
+          <h2 class="gw-name">ICICI Secondary Rail</h2>
+        </div>
+        <div class="gw-stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">SUCCESS RATE (SR)</span>
+            <span class="stat-val" id="sr-gw2">99.4%</span>
           </div>
-          <div class="doctor-content">
-            <div class="diagnosis-card" id="diagnosis-box">
-              <div class="diagnosis-title" id="diag-title">SYSTEM NOMINAL — All routes operating within SLOs</div>
-              <div class="confidence-meter">
-                <div class="meter-label">
-                  <span>Confidence Score:</span>
-                  <span id="diag-conf-val">99%</span>
-                </div>
-                <div class="meter-bar">
-                  <div class="meter-fill" id="diag-conf-fill" style="width: 99%;"></div>
-                </div>
-              </div>
-              <div class="diagnosis-action">
-                <span>Recommended Action:</span>
-                <span class="action-tag" id="diag-action">NO_ACTION</span>
-              </div>
-              <p class="diagnosis-explanation" id="diag-explanation">
-                Statistical metrics show normal payment flow. Latency and success rates are aligned with baseline profiles.
-              </p>
-              <div class="precedent-box" id="diag-precedent" style="display: none;">
-                <strong>Memory Precedent:</strong> <span id="diag-precedent-text"></span>
-              </div>
-            </div>
-
-            <div class="evidence-list" id="evidence-container">
-              <h3>Telemetry Evidence Collected:</h3>
-              <ul id="evidence-items">
-                <li class="evidence-item empty">No active degradation evidence</li>
-              </ul>
-            </div>
+          <div class="stat-item">
+            <span class="stat-label">WILSON 95% CI</span>
+            <span class="stat-val" id="wilson-gw2">[98.5% – 99.9%]</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">LATENCY (P95)</span>
+            <span class="stat-val" id="lat-gw2">92ms</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">ERROR RATE (ERR)</span>
+            <span class="stat-val" id="err-gw2">0.6%</span>
           </div>
         </div>
-
-        <!-- Failure Injection Sandbox -->
-        <div class="panel sandbox-panel">
-          <div class="panel-header">
-            <h2>Failure Injection Sandbox (Track 03 Scenarios)</h2>
-            <span class="badge">Deterministic Simulation</span>
-          </div>
-          <div class="sandbox-buttons">
-            <button class="btn-scenario danger" onclick="injectScenario('PSP_TIMEOUT')">⚡ PSP Timeout (4000ms+)</button>
-            <button class="btn-scenario danger" onclick="injectScenario('BANK_DEGRADATION')">🏦 Bank CBS Down (ICICI)</button>
-            <button class="btn-scenario warning" onclick="injectScenario('AUTH_SPIKE')">🔐 Auth Spike (OTP Failed)</button>
-            <button class="btn-scenario danger" onclick="injectScenario('HTTP_500')">💥 Upstream Gateway 500</button>
-            <button class="btn-scenario warning" onclick="injectScenario('NETWORK_RESET')">🔌 TLS Network Reset</button>
-            <button class="btn-scenario warning" onclick="injectScenario('TRAFFIC_SURGE')">📈 Traffic Surge (5x)</button>
-            <button class="btn-scenario danger" onclick="injectScenario('ROUTE_FLAPPING')">🔄 Route Flapping</button>
-            <button class="btn-scenario danger" onclick="injectScenario('MID_CANARY_FAILURE')">🐣 Mid-Canary Failure</button>
-            <button class="btn-scenario success full-width" onclick="injectScenario('HEALTHY')">🟢 Restore Healthy Traffic</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bottom Feeds: Live Transactions & Audit Trail -->
-    <section class="bottom-grid">
-      <div class="panel stream-panel">
-        <div class="panel-header">
-          <h2>Live Payment Transaction Stream</h2>
-          <span class="badge" id="live-txn-count">0 txns/min</span>
-        </div>
-        <div class="stream-table-wrapper">
-          <table class="stream-table">
-            <thead>
-              <tr>
-                <th>Txn ID</th>
-                <th>Bank</th>
-                <th>Method</th>
-                <th>Amount (INR)</th>
-                <th>Route</th>
-                <th>Status</th>
-                <th>Latency</th>
-              </tr>
-            </thead>
-            <tbody id="txn-stream-body">
-              <tr><td colspan="7" class="placeholder-row">Awaiting live transactions...</td></tr>
-            </tbody>
-          </table>
+        <div class="gw-cons-note nominal" id="cons-gw2">
+          <span class="cons-icon" id="cons-icon-gw2">✓</span>
+          <span class="cons-msg" id="cons-msg-gw2">Healthy reserve. Standby to absorb redirected traffic.</span>
         </div>
       </div>
 
-      <div class="panel audit-panel">
-        <div class="panel-header">
-          <h2>Autonomous Audit Trail & FSM Events</h2>
-          <span class="badge">Compliance Log</span>
+      <!-- Gateway 3 Card -->
+      <div class="gateway-card" id="card-gw3">
+        <div class="gw-top-row">
+          <span class="gw-active-pill standby" id="status-gw3">STANDBY (RESERVE)</span>
         </div>
-        <div class="audit-log-container" id="audit-log-list">
-          <div class="audit-item">
-            <span class="audit-time">00:00:00</span>
-            <span class="audit-actor actor-system">SYSTEM</span>
-            <span class="audit-desc">Pulse autonomous engine initialized in AUTONOMOUS mode.</span>
+        <div class="gw-title-area">
+          <span class="gw-id-label">GATEWAY 3</span>
+          <h2 class="gw-name">Axis Resilient Fallback</h2>
+        </div>
+        <div class="gw-stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">SUCCESS RATE (SR)</span>
+            <span class="stat-val" id="sr-gw3">96.8%</span>
           </div>
+          <div class="stat-item">
+            <span class="stat-label">WILSON 95% CI</span>
+            <span class="stat-val" id="wilson-gw3">[94.2% – 98.1%]</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">LATENCY (P95)</span>
+            <span class="stat-val" id="lat-gw3">175ms</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">ERROR RATE (ERR)</span>
+            <span class="stat-val" id="err-gw3">3.2%</span>
+          </div>
+        </div>
+        <div class="gw-cons-note nominal" id="cons-gw3">
+          <span class="cons-icon">✓</span>
+          <span class="cons-msg">Tertiary failover aggregator online.</span>
         </div>
       </div>
     </section>
+
+    <!-- 3. BOTTOM ROW (3 COLUMNS: Simulator | AI Doctor | Platform KPIs) -->
+    <section class="bottom-row">
+      
+      <!-- Column 1: Failure Simulator Pane -->
+      <div class="bottom-pane simulator-pane">
+        <div class="pane-title-row">
+          <h3>Failure Simulator Pane</h3>
+          <span class="pane-badge">Backend Chaos</span>
+        </div>
+        <div class="sim-buttons-stack">
+          <button class="sim-btn btn-danger" onclick="injectScenario('PSP_TIMEOUT')">
+            <span class="btn-symbol">⚡</span>
+            <div class="btn-text">
+              <strong>Simulate Gateway 1 Outage</strong>
+              <span>HDFC PSP timeout (4500ms+) & drop SR</span>
+            </div>
+          </button>
+
+          <button class="sim-btn btn-danger" onclick="injectScenario('BANK_DEGRADATION')">
+            <span class="sim-symbol">🏦</span>
+            <div class="btn-text">
+              <strong>Simulate Bank CBS Crash</strong>
+              <span>Gateway 1 HTTP 500 server error surge</span>
+            </div>
+          </button>
+
+          <button class="sim-btn btn-warning" onclick="injectScenario('ROUTE_FLAPPING')">
+            <span class="sim-symbol">🔄</span>
+            <div class="btn-text">
+              <strong>Simulate Route Flapping</strong>
+              <span>Test circuit breaker & quarantine cooldown</span>
+            </div>
+          </button>
+
+          <button class="sim-btn btn-danger" onclick="injectScenario('CASCADING_OUTAGE')">
+            <span class="sim-symbol">💥</span>
+            <div class="btn-text">
+              <strong>Simulate Cascading Failover</strong>
+              <span>Gateways 1 & 2 down ➔ Failover to Gateway 3 Axis</span>
+            </div>
+          </button>
+
+          <button class="sim-btn btn-success" onclick="injectScenario('HEALTHY')">
+            <span class="sim-symbol">🟢</span>
+            <div class="btn-text">
+              <strong>Reset to Healthy Normal</strong>
+              <span>Restore nominal baseline & clear quarantine</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Column 2: AI Doctor & Root Cause Verdict -->
+      <div class="bottom-pane doctor-pane">
+        <div class="pane-title-row">
+          <h3>AI Doctor & Root Cause Verdict</h3>
+          <span class="pane-badge badge-ai" id="ai-status-badge">ONLINE</span>
+        </div>
+        <div class="verdict-container" id="verdict-container">
+          <div class="verdict-status-title" id="diag-title">SYSTEM NOMINAL — All Gateways Healthy</div>
+          
+          <div class="verdict-meta-grid">
+            <div class="meta-box">
+              <span class="meta-label">AI CONFIDENCE</span>
+              <span class="meta-val" id="diag-conf-val">99%</span>
+            </div>
+            <div class="meta-box">
+              <span class="meta-label">RECOMMENDED ACTION</span>
+              <span class="meta-val highlight" id="diag-action">NO_ACTION</span>
+            </div>
+          </div>
+
+          <p class="verdict-summary" id="diag-explanation">
+            Continuous Wilson score monitoring confirms all routes are operating within established SLO baselines.
+          </p>
+
+          <!-- Dynamic Swapping Progress Bar -->
+          <div class="swapping-progress-card" id="swapping-card" style="display: none;">
+            <div class="swap-header-row">
+              <span class="swap-step-title" id="swap-step-title">Autonomous Canary Swapping Active:</span>
+              <span class="swap-step-pct" id="swap-step-pct">20%</span>
+            </div>
+            <div class="swap-track">
+              <div class="swap-bar-fill" id="swap-bar-fill" style="width: 20%;"></div>
+            </div>
+            <div class="swap-gates-summary">
+              5 Safety Gates: Min Sample ✓ | SR Delta ✓ | Wilson Bound ✓ | Latency SLO ✓ | Error Cap ✓
+            </div>
+          </div>
+
+          <div class="quarantine-box" id="quarantine-box" style="display: none;">
+            <strong>Safety Circuit Breaker:</strong> <span id="quarantine-msg">Gateway 1 locked in quarantine for 30s.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 3: Platform KPIs (Success Rate, Revenue at Risk, Revenue Loss Prevented) -->
+      <div class="bottom-pane kpis-pane">
+        <div class="pane-title-row">
+          <h3>PLATFORM</h3>
+        </div>
+        <div class="kpi-cards-stack">
+          <!-- KPI 1: Platform Success Rate -->
+          <div class="kpi-tile" id="kpi-tile-sr">
+            <span class="kpi-tile-title">PLATFORM SUCCESS RATE</span>
+            <span class="kpi-tile-number" id="val-sr">98.5%</span>
+            <span class="kpi-tile-subtext" id="val-wilson">SLO: &ge;95% (Wilson 95% CI Verified)</span>
+          </div>
+
+          <!-- KPI 2: Revenue At Risk -->
+          <div class="kpi-tile danger" id="kpi-tile-risk">
+            <span class="kpi-tile-title">REVENUE AT RISK</span>
+            <span class="kpi-tile-number" id="val-risk">₹0</span>
+          </div>
+
+          <!-- KPI 3: Revenue Loss Prevented -->
+          <div class="kpi-tile success" id="kpi-tile-recovered">
+            <span class="kpi-tile-title">REVENUE LOSS PREVENTED</span>
+            <span class="kpi-tile-number" id="val-recovered">₹0</span>
+            <span class="kpi-tile-subtext">Capital Saved by Autonomous Gateway Swapping</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
   </div>
 
   <script src="app.js"></script>
