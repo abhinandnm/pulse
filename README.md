@@ -96,16 +96,18 @@ python -m pytest tests/ -v
 
 ---
 
-## 🏆 Key Results & Impact
+## ⚖️ Conventional Monitoring vs. PULSE
 
-| Metric | Traditional Incident Response | PULSE Autonomous AI |
+Instead of relying on rigid thresholds or manual on-call triage, PULSE introduces a closed-loop reliability architecture:
+
+| Aspect | Conventional Alerting | PULSE Autonomous Architecture |
 | :--- | :--- | :--- |
-| **Recovery Time (MTTR)** | 20 to 45 minutes (manual triage) | **< 5 seconds (autonomous)** |
-| **Human Engineering Required** | Yes (pages on-call engineers at 3 AM) | **Zero human intervention** |
-| **Failover Safety** | Risky (dumping 100% traffic crashes backups) | **Progressive Canary (20% ➔ 50% ➔ 100%)** |
-| **Route Ping-Ponging** | High risk during unstable network | **Guaranteed 60s Quarantine Circuit Breaker** |
-| **Platform Success Rate** | Plunges to 44% during outage | **Restored back to 99%+** |
-| **Revenue Saved** | Thousands lost every minute | **₹1,68,000+ saved per incident** |
+| **Detection Method** | Static threshold alerts (often noisy or late) | Statistical anomaly detection with Wilson confidence bounds |
+| **Root Cause Analysis** | Engineer manually inspects logs and dashboards | AI Doctor queries error logs and provides evidence-backed diagnosis |
+| **Revenue Awareness** | Rough estimation after the incident is resolved | Real-time tracking of revenue at risk and loss prevented |
+| **Traffic Migration** | All-or-nothing manual switch (risks overloading backup) | Safe progressive canary rollout ($20\% \rightarrow 50\% \rightarrow 100\%$) |
+| **Safety Verification** | Human judgement under pressure | 5 deterministic safety gates (latency, sample size, error caps) |
+| **Route Stability** | Vulnerable to route ping-ponging if a gateway flickers | Anti-flapping circuit breaker with quarantine cooldown |
 
 ---
 
